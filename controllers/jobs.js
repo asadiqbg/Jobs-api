@@ -4,8 +4,57 @@ const {NotFoundError,BadRequestError} = require('../errors/index')
 
 
 const getAllJobs = async(req,res)=>{
-  const allJobs = await Job.find({createdBy:req.user.userId}).sort('createdAt')
-  res.status(StatusCodes.OK).json({allJobs})
+  const {userId} = req.user
+  const {
+    page = 1,
+    limit = 10,
+    sort= '-createdAt',
+    search = '',
+    status,
+    company = '',
+    position = '',
+  } = req.query
+
+  const queryObject = {createdBy:userId}
+  //General search functionality
+  if(search){
+    queryObject.$or= [
+      {position:{$regex:search,$options:'i'}},
+      {company:{$regex:search,$options:'i'}}
+    ]
+  }
+
+  if (status && status!=='all'){
+    queryObject.status = status
+
+  }
+  //company and postition filter
+  if(company && company!=='all'){
+    queryObject.company = company
+  }
+  if(position && position !== 'all'){
+    queryObject.position = position
+  }
+  let result = Job.find(queryObject)
+  //Handle Sorting
+  if(sort){
+    const sortList = sort.split(',').join(' ')
+    result = result.sort(sortList)
+  }
+    // Pagination calculations
+  const pageNum = Number(page)
+  const limitNum = Number(limit)
+  const skip = (pageNum - 1) * limitNum
+  
+  // Apply pagination
+  result = result.skip(skip).limit(limitNum)
+  
+  // Execute query
+  const jobs = await result;
+
+  const totalJobs = await Job.countDocuments(queryObject);
+  const numOfPages = Math.ceil(totalJobs / limitNum);
+  res.status(StatusCodes.OK).json({ jobs, totalJobs, numOfPages });
 }
 
 const getJobs = async(req,res)=>{

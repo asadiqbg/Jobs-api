@@ -4,7 +4,8 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "start": "nodemon app.js"
+    "start": "node app.js",
+    "dev": "nodemon app.js"
   },
   "author": "",
   "license": "ISC",
@@ -28,5 +29,8 @@
   },
   "devDependencies": {
     "nodemon": "^2.0.9"
+  },
+  "engine":{
+    "node":"22.16.0"
   }
 }
